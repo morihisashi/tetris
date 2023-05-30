@@ -3,6 +3,8 @@
     <body>
         <canvas id="can"></canvas>
         <script>
+            // 落ちるスピード
+            const GAME_SPEED = 500;
 
             // フィールドサイズ
             const FIELD_COL = 10;
@@ -35,11 +37,13 @@
             let tetro_x = 0;
             let tetro_y = 0;
 
-            // フィールド本体
+            // フィールドの中身
             let field = [];
             
             init();
             drawAll();
+
+            setInterval(dropTetro, GAME_SPEED);
 
             // 初期化
             function init(){
@@ -87,7 +91,7 @@
                         let nx = tetro_x + mx + x;
                         let ny = tetro_y + my + y;
                         if(ntetro[y][x]){
-                            if(field[ny][nx] || ny < 0 || nx < 0 || ny >= FIELD_ROW || nx >= FIELD_COL) {
+                            if(ny < 0 || nx < 0 || ny >= FIELD_ROW || nx >= FIELD_COL || field[ny][nx]) {
                                 return false;
                             }
                         }
@@ -106,6 +110,28 @@
                     }
                 }
                 return ntetro;
+            }
+
+            // テトロを固定する処理
+            function fixTetro(){
+                for(let y = 0; y<TETRO_SIZE; y++){
+                    for(let x = 0; x<TETRO_SIZE; x++){
+                        if(tetro[y][x]){
+                            field[tetro_y + y][tetro_x + x] = 1;
+                        }
+                    }
+                }
+            }
+
+            // テトロが落ちる処理
+            function dropTetro(){
+                if(checkMove(0, 1))tetro_y++;
+                else{
+                    fixTetro();
+                    tetro_x = 0;
+                    tetro_y = 0;
+                }
+                drawAll();
             }
             
             // キーボードが押された時の処理
