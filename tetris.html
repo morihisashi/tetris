@@ -1,371 +1,328 @@
 <!DOCTYPE html>
-<html>
-    <body>
-        <canvas id="can"></canvas>
-        <script>
-            // 落ちるスピード
-            const GAME_SPEED = 500;
+<html lang="ja">
+<head><meta charset="utf-8">;</head>
+<body>
+<canvas id="can"></canvas>
+<script>
 
-            // フィールドサイズ
-            const FIELD_COL = 10;
-            const FIELD_ROW = 20;
+//落ちるスピード
+const GAME_SPEED = 300;
 
-            // ブロック1つのサイズ（ピクセル）
-            const BLOCK_SIZE = 30;
+//フィールドサイズ
+const FIELD_COL = 10;
+const FIELD_ROW = 20;
 
-            // キャンバスサイズ
-            const SCREEN_W = BLOCK_SIZE * FIELD_COL;
-            const SCREEN_H = BLOCK_SIZE * FIELD_ROW;
+//ブロック一つのサイズ(ピクセル)
+const BLOCK_SIZE = 30;
 
-            // テトロミノのサイズ
-            const TETRO_SIZE = 4;
-            let can = document.getElementById("can");
-            let con = can.getContext("2d");
+//スクリーンサイズ
+const SCREEN_W = BLOCK_SIZE * FIELD_COL;
+const SCREEN_H = BLOCK_SIZE * FIELD_ROW;
 
-            can.width = SCREEN_W;
-            can.height = SCREEN_H;
-            can.style.border = "4px solid #555";
+//テトロミノのサイズ
+const TETRO_SIZE =4;
 
-            const TETRO_COLORS = [
-                "#000",  // 0 空
-                "#6CF",  // 1 水色
-                "#F92",  // 2 オレンジ
-                "#66F",  // 3 青
-                "#C5C",  // 4 紫
-                "#FD2",  // 5 黄色
-                "#F44",  // 6 赤
-                "#5B5",  // 7 緑
-            ]
+const TETRO_COLORS =[
+	"#000",			//0空
+	"#6CF",			//1水色
+	"#F92",			//2オレンジ
+	"#66F",			//3青
+	"#C5C",			//4紫
+	"#FD2",			//5黄色
+	"#F44",			//6赤
+	"#5B5"			//7緑
+];
 
-            const TETRO_TYPES = [
-                [], // 0.空
-                [                 // 1.l
-                    [0, 0, 0, 0],
-                    [1, 1, 1, 1],
-                    [0, 0, 0, 0],
-                    [0, 0, 0, 0]
-                ],
-                [                 // 2.L
-                    [0, 1, 0, 0],
-                    [0, 1, 0, 0],
-                    [0, 1, 1, 0],
-                    [0, 0, 0, 0]
-                ],
-                [                 // 3.J
-                    [0, 0, 1, 0],
-                    [0, 0, 1, 0],
-                    [0, 1, 1, 0],
-                    [0, 0, 0, 0]
-                ],
-                [                 // 4.T
-                    [0, 0, 0, 0],
-                    [1, 1, 1, 0],
-                    [0, 1, 0, 0],
-                    [0, 0, 0, 0]
-                ],
-                [                 // 5.O
-                    [0, 0, 0, 0],
-                    [0, 1, 1, 0],
-                    [0, 1, 1, 0],
-                    [0, 0, 0, 0]
-                ],
-                [                 // 6.Z
-                    [0, 0, 0, 0],
-                    [1, 1, 0, 0],
-                    [0, 1, 1, 0],
-                    [0, 0, 0, 0]
-                ],
-                [                 // 7.S
-                    [0, 0, 0, 0],
-                    [0, 1, 1, 0],
-                    [1, 1, 0, 0],
-                    [0, 0, 0, 0]
-                ]
-            ]
+const TETRO_TYPES = [
+	[],	// 0.空っぽ
+	
+	[					// 1.I
+		[ 0, 0, 0, 0 ],
+		[ 1, 1, 1, 1 ],
+		[ 0, 0, 0, 0 ],
+		[ 0, 0, 0, 0 ]
+	],
+	[					// 2.L
+		[ 0, 1, 0, 0 ],
+		[ 0, 1, 0, 0 ],
+		[ 0, 1, 1, 0 ],
+		[ 0, 0, 0, 0 ]
+	],
+	[					// 3.J
+		[ 0, 0, 1, 0 ],
+		[ 0, 0, 1, 0 ],
+		[ 0, 1, 1, 0 ],
+		[ 0, 0, 0, 0 ]
+	],
+	[					// 4.T
+		[ 0, 1, 0, 0 ],
+		[ 0, 1, 1, 0 ],
+		[ 0, 1, 0, 0 ],
+		[ 0, 0, 0, 0 ]
+	],
+	[					// 5.O
+		[ 0, 0, 0, 0 ],
+		[ 0, 1, 1, 0 ],
+		[ 0, 1, 1, 0 ],
+		[ 0, 0, 0, 0 ]
+	],
+	[					// 6.Z
+		[ 0, 0, 0, 0 ],
+		[ 1, 1, 0, 0 ],
+		[ 0, 1, 1, 0 ],
+		[ 0, 0, 0, 0 ]
+	],
+	[					// 7.S
+		[ 0, 0, 0, 0 ],
+		[ 0, 1, 1, 0 ],
+		[ 1, 1, 0, 0 ],
+		[ 0, 0, 0, 0 ]
+	]
+];
 
-            // 画像と効果音
-            let bgimage;
-            bgimage = new Image();
-            //bgimage.src="back.png";
-            bgimage.src="img_1.jpg";
-            let blimage;
-            blimage = new Image();
-            blimage.src="block.png";
-            let se1, se2, se3;
-            se1 = new Audio("se1.mp3");
-            se2 = new Audio("se2.mp3");
-            se3 = new Audio("se3.mp3");
+//初期位置
+const START_X = FIELD_COL/2 - TETRO_SIZE/2;
+const START_Y = 0;
 
-            const START_X = FIELD_COL/2 - TETRO_SIZE/2;
-            const START_Y = 0;
-            // テトロミノ本体
-            let tetro;
+//テトロミノ本体
+let tetro;
+//テトロミノの形
+let tetro_t;
 
-            // テトロミノの座標
-            let tetro_x = START_X;
-            let tetro_y = START_Y;
+//テトロミノの座標
+let tetro_x = START_X;
+let tetro_y = START_Y;
 
-            // テトロミノの形
-            let tetro_t;
+//フィールド本体
+let field = [];
 
-            // フィールドの中身
-            let field = [];
+//ゲームオーバーフラグ
+let over = false;
 
-            // ゲームオーバーフラグ
-            let over = false;
+let can = document.getElementById("can");
+let con = can.getContext("2d");
 
-            // 消したライン数
-            let lines = 0;
+can.width  = SCREEN_W;
+can.height = SCREEN_H;
+can.style.border = "4px solid #555";
 
-            // スコア
-            let score = 0;
+tetro_t = Math.floor( Math.random()*(TETRO_TYPES.length-1) )+1;
+tetro = TETRO_TYPES[ tetro_t ];
 
-            tetro_t = Math.floor(Math.random() * (TETRO_TYPES.length - 1)) + 1;
-            tetro = TETRO_TYPES[tetro_t];
-            
-            init();
-            drawAll();
+init();
+drawAll();
 
-            setInterval(dropTetro, GAME_SPEED);
+setInterval( dropTetro, GAME_SPEED );
 
-            // 初期化
-            function init(){
-                // フィールドのクリア
-                for(let y = 0; y<FIELD_ROW; y++){
-                    field[y] = [];
-                    for(let x = 0; x<FIELD_COL; x++){
-                        field[y][x] = 0;
-                    }
-                }
+//初期化
+function init()
+{
+	//フィールドのクリア
+	for(let y=0; y<FIELD_ROW ; y++ )
+	{
+		field[y] = [];
+		for(let x=0; x<FIELD_COL ; x++ )
+		{
+			field[y][x] =0;
+		}
+	}
+}
 
-                // 最初のテトロの為にネクスト入れる
-                tetro_n = Math.floor(Math.random()*(TETRO_TYPES.length-1)+1);
+//ブロック一つを描画する
+function drawBlock(x,y,c)
+{
+	let px = x * BLOCK_SIZE;
+	let py = y * BLOCK_SIZE;
+	con.fillStyle=TETRO_COLORS[c];
+	con.fillRect(px,py,BLOCK_SIZE,BLOCK_SIZE);
+	con.strokeStyle="black";
+	con.strokeRect(px,py,BLOCK_SIZE,BLOCK_SIZE);
+}
 
-                // テトロをセットして描画して開始！
-                setTetro();
-                drawAll();
-                setInterval(dropTetro, GAME_SPEED - speed);
-            }
+//全部描画する
+function drawAll()
+{
+	con.clearRect(0,0,SCREEN_W,SCREEN_H);
+	
+	for(let y=0; y<FIELD_ROW ; y++ )
+	{
+		for(let x=0; x<FIELD_COL ; x++ )
+		{
+			if( field[y][x] )
+			{
+				drawBlock(x,y,field[y][x]);
+			}
+		}
+	}
+	for(let y=0; y<TETRO_SIZE ; y++ )
+	{
+		for(let x=0; x<TETRO_SIZE ; x++ )
+		{
+			if( tetro[y][x] )
+			{
+				drawBlock(tetro_x+x, tetro_y+y,tetro_t);
+			}
+		}
+	}
+	
+	if(over)
+	{
+		let s="GAME OVER";
+		con.font = "40px 'ＭＳ ゴシック'";
+		let w = con.measureText(s).width;
+		let x = SCREEN_W/2 - w/2;
+		let y = SCREEN_H/2 - 20;
+		con.lineWidth = 4;
+		con.strokeText(s,x,y);
+		con.fillStyle="white";
+		con.fillText(s,x,y);
+	}
+}
 
-            // テトロをネクストで初期化
-            function setTetro(){
-                // ネクストを現在のテトロにする
-                tetro_t = tetro_n;
-                tetro = TETRO_TYPES[tetro_t];
-                tetro_n = Math.floor(Math.random()*(TETRO_TYPES.length-1))+1;
+// ブロックの衝突判定
+function checkMove( mx,my ,ntetro)
+{
+	if( ntetro == undefined ) ntetro = tetro;
+	
+	for(let y=0; y<TETRO_SIZE ; y++ )
+	{
+		for(let x=0; x<TETRO_SIZE ; x++ )
+		{
+			if(  ntetro[y][x]  )
+			{
+				let nx = tetro_x + mx + x;
+				let ny = tetro_y + my + y;
+				
+				if( ny < 0 ||
+					nx < 0 ||
+					ny >= FIELD_ROW ||
+					nx >= FIELD_COL ||
+					field[ny][nx] )
+				{
+					return false;
+				}
+			}
+		}
+	}
+	
+	return true;
+}
 
-                // 位置を初期値にする
-                tetro_x = START_X;
-                tetro_y = START_Y;
-            }
+// テトロの回転
+function rotate()
+{
+	let ntetro = [];
+	
+	for(let y=0; y<TETRO_SIZE ; y++ )
+	{
+		ntetro[y]=[];
+		for(let x=0; x<TETRO_SIZE ; x++ )
+		{
+			ntetro[y][x] = tetro[TETRO_SIZE-x-1][y];
+		}
+	}
+	
+	return ntetro;
+}
 
-            // フィールドを描画する
-            function drawBlock(x, y, c){
-                let px = x * BLOCK_SIZE;
-                let py = y * BLOCK_SIZE;
-                con.drawImage(
-                    blimage,
-                    c*BLOCK_SIZE,
-                    0,
-                    BLOCK_SIZE,
-                    BLOCK_SIZE,
-                    px,
-                    py,
-                    BLOCK_SIZE
-                    );
-            }
+//テトロを固定する
+function fixTetro()
+{
+	for(let y=0; y<TETRO_SIZE ; y++ )
+	{
+		for(let x=0; x<TETRO_SIZE ; x++ )
+		{
+			if( tetro[y][x] )
+			{
+				field[tetro_y + y][tetro_x + x] = tetro_t;
+			}
+		}
+	}
+}
 
-            // 全部描画する
-            function drawAll(){
-                // 背景を描画
-                con.drawImage(bgimage,-100,-100);
-                // フィールドの枠を描く
-                con.strokeStyle="rgba(80,160,255,0.1)";
-                con.strokeRect(OFFSET_X-6, OFFSET_Y-6, SCREEN_W+12, SCREEN_H+12);
-                con.strokeStyle="rgba(80,160,255,0.5)";
-                con.strokeRect(OFFSET_X-2, OFFSET_Y-2, SCREEN_W+4, SCREEN_H+4);
-                con.fillStyle="rgba(0,0,0,0.4)";
-                con.fillRect(OFFSET_X, OFFSET_Y, SCREEN_W, SCREEN_H);
+//ラインが揃ったかチェックして消す
+function checkLine()
+{
+	let linec=0;
+	for(let y=0; y<FIELD_ROW ; y++ )
+	{
+		let flag=true;
+		
+		for(let x=0; x<FIELD_COL ; x++ )
+		{
+			if( !field[y][x] )
+			{
+				flag=false;
+				break;
+			}
+		}
+		
+		if(flag)
+		{
+			linec++;
+			
+			for(let ny = y; ny>0 ;ny-- )
+			{
+				for(let nx=0;nx<FIELD_COL ; nx++)
+				{
+					field[ny][nx] = field[ny-1][nx];
+				}
+			}
+		}
+	}
+}
 
-                for(let y = 0; y<FIELD_ROW; y++){
-                    for(let x = 0; x<FIELD_COL; x++){
-                        if(field[y][x]){
-                            drawBlock(x, y, field[y][x]);
-                        }
-                    }
-                }
-                // 着地点を計算
-                let plus = 0;
-                while(checkMove(0, plus+1))plus++;
+// ブロックの落ちる処理
+function dropTetro()
+{
+	if(over)return;
+	
+	if( checkMove(  0, 1 ) )tetro_y++;
+	else
+	{
+		fixTetro();
+		checkLine();
+		tetro_t = Math.floor( Math.random()*(TETRO_TYPES.length-1) )+1;
+		tetro = TETRO_TYPES[ tetro_t ];
+		tetro_x = START_X;
+		tetro_y = START_Y;
+		
+		if( !checkMove(0,0) )
+		{
+			over=true;
+		}
+	}
+	drawAll();
+}
 
-                // テトロミノを描画
-                for(let y = 0; y<TETRO_SIZE; y++){
-                    for(let x = 0; x<TETRO_SIZE; x++){
-                        // テトロ本体
-                        if(tetro[y][x] == 1){
-                            // 着地点
-                            drawBlock(tetro_x+x, tetro_y+y_plus, 0);
-                            // 本体
-                            drawBlock(tetro_x + x, tetro_y + y, tetro_t);
-                        }
-                        // ネクストテトロ
-                        if(TETRO_TYPES[tetro_n][y][x]){
-                            drawBlock(13+x, 4+y, tetro_n);
-                        }
-                    }
-                }
-                drawInfo();
-            }
+//キーボードが押された時の処理
+document.onkeydown = function(e)
+{
+	if(over)return;
+	
+	switch( e.keyCode )
+	{
+		case 37:// 左
+			if( checkMove( -1, 0 ) )tetro_x--;
+			break;
+		case 38:// 上
+			//if( checkMove(  0,-1 ) )tetro_y--;
+			break;
+		case 39:// 右
+			if( checkMove(  1, 0 ) )tetro_x++;
+			break;
+		case 40:// 下
+			if( checkMove(  0, 1 ) )tetro_y++;
+			break;
+		case 32:// スペース
+			let ntetro = rotate();
+			if( checkMove( 0, 0, ntetro) ) tetro = ntetro;
+			break;
+	}
+	
+	drawAll();
+}
 
-            // インフォメーション表示
-            function drawinfo(){
-                let w;
-                con.fillStyle="white";
-
-                let s = "NEXT";
-                con.fillText(s, 410, 120);
-
-                s = "SCORE";
-                con.fillText(s, 410, 300);
-                s = "" + score;
-                w = con.measureText(s).width;
-                con.fillText(s, 560-w, 340);
-
-                s = "LINES";
-                w = con.measureText(s).width;
-                con.fillText(s, 410, 400);
-                s = "" + lines;
-                w = con.measureText(s).width;
-                con.fillText(s, 560-w, 340);
-
-                if(over){
-                    let s = "GAME OVER";
-                    con.font = "40px 'MS ゴシック'";
-                    let w = con.measureText(s).width;
-                    let x = SCREEN_W/2 - w/2;
-                    let y = SCREEN_H/2 - 20;
-                    con.lineWidth = 4;
-                    con.strokeText(s,x,y);
-                    con.fillStyle="white";
-                    con.filltext(s,x,y);
-                }
-            }
-
-            // ブロックの衝突判定
-            function checkMove(mx, my, ntetro){
-                if(ntetro == undefined)ntetro = tetro
-                for(let y = 0; y<TETRO_SIZE; y++){
-                    for(let x = 0; x<TETRO_SIZE; x++){
-                        let nx = tetro_x + mx + x;
-                        let ny = tetro_y + my + y;
-                        if(ntetro[y][x]){
-                            if(ny < 0 || nx < 0 || ny >= FIELD_ROW || nx >= FIELD_COL || field[ny][nx]) {
-                                return false;
-                            }
-                        }
-                    }
-                }
-                return true;
-            }
-
-            // テトロの回転
-            function rotate(){
-                let ntetro = [];
-                for(let y = 0; y<TETRO_SIZE; y++){
-                    ntetro[y] = [];
-                    for(let x = 0; x<TETRO_SIZE; x++){
-                        ntetro[y][x] = tetro[TETRO_SIZE-x-1][y];
-                    }
-                }
-                return ntetro;
-            }
-
-            // テトロを固定する処理
-            function fixTetro(){
-                for(let y = 0; y<TETRO_SIZE; y++){
-                    for(let x = 0; x<TETRO_SIZE; x++){
-                        if(tetro[y][x]){
-                            field[tetro_y + y][tetro_x + x] = tetro_t;
-                        }
-                    }
-                }
-            }
-
-            // ラインが揃ったかチェックして消す
-            function checkLine(){
-                let linec;
-                for(let y = 0; y<FIELD_ROW; y++){
-                    let flag = true;
-                    for(let x = 0; x<FIELD_COL; x++){
-                        if( !field[y][x]){
-                            flag = false;
-                            break;
-                        }
-                    }
-                    if(flag){
-                        linec++;
-                        for(let ny = y; ny > 0; ny--){
-                            for(let nx = 0; nx < FIELD_COL; nx++){
-                                field[ny][nx] = field[ny-1][nx];
-                            }
-                        }
-                    }
-                }
-                if(linec){
-                    se3.pause();
-                    se3.play();
-                    lines += linec;
-                    score += 100 * (2 ** (linec - 1));
-                    if(speed < GAME_SPEED - 10)speed += 10;
-                }
-            }
-
-            // テトロが落ちる処理
-            function dropTetro(){
-                if(over)return;
-                if(checkMove(0, 1))tetro_y++;
-                else{
-                    fixTetro();
-                    checkLine();
-                    tetro_t = Math.floor(Math.random() * (TETRO_TYPES.length - 1)) + 1;
-                    tetro = TETRO_TYPES[tetro_t];
-                    tetro_x = START_X;
-                    tetro_y = START_Y;
-
-                    if(!checkMove(0,0)){
-                        over=true;
-                    }
-                }
-                drawAll();
-            }
-            
-            // キーボードが押された時の処理
-            document.onkeydown = function(e){
-                if(over)return;
-                
-                // onkeydown keycode 検索
-                switch(e.keyCode){
-                    case 37: // 左
-                        if(checkMove(-1, 0))tetro_x--;
-                        break;
-                    case 38: // 上
-                        //if(checkMove(0, -1))tetro_y--;
-                        break;
-                    case 39: // 右
-                        if(checkMove(1, 0))tetro_x++;
-                        break;
-                    case 40: // 下
-                        while(checkMove(0, 1))tetro_y++;
-                        break;
-                    case 32: // スペース
-                    let ntetro = rotate()
-                        if(checkMove(0, 0, ntetro))tetro = ntetro;
-                        break;
-
-                }
-                drawAll();
-            }
-
-        </script>
-    </body>`
+</script>
+</body>
 </html>
